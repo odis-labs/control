@@ -74,7 +74,7 @@ module Functor0 = struct
     val (<@>) : (item -> item) -> t -> t
   end
 
-  module Extension (Instance : Functor0) = struct
+  module Extend (Instance : Functor0) = struct
     include Instance
 
     let ( <@> ) f m = map f m
@@ -95,7 +95,7 @@ module Functor1 = struct
     val (<@>) : ('a -> 'b) -> 'a t -> 'b t
   end
 
-  module Extension (Instance : Functor1) = struct
+  module Extend (Instance : Functor1) = struct
     include Instance
 
     let ( <@> ) f m = map f m
@@ -116,7 +116,7 @@ module Functor2 = struct
     val (<@>) : ('a -> 'b ) -> ('a, 'x) t -> ('b, 'x) t
   end
 
-  module Extension (Instance : Functor2) = struct
+  module Extend (Instance : Functor2) = struct
     include Instance
 
     let ( <@> ) f m =
@@ -162,7 +162,7 @@ module Applicative1 = struct
       Instance.apply (Instance.pure f) ma
   end
 
-  module Extension (Instance : Applicative1) = struct
+  module Extend (Instance : Applicative1) = struct
     include Instance
 
     module Functor = To_functor (Instance)
@@ -215,7 +215,7 @@ module Applicative2 = struct
   end
 
 
-  module Extension (Instance : Applicative2)  = struct
+  module Extend (Instance : Applicative2)  = struct
     include Instance
 
     module Functor = To_functor(Instance)
@@ -262,7 +262,7 @@ module Alternative1 = struct
     val many : 'a t -> 'a list t
   end
 
-  module Extension
+  module Extend
       (T : Alternative1)
       (A : Applicative1 with type 'a t := 'a T.t) = struct
 
@@ -310,7 +310,7 @@ module Alternative2 = struct
     val many : ('a, 'x) t -> ('a list, 'x) t
   end
 
-  module Extension
+  module Extend
       (T : Alternative2)
       (A : Applicative2 with type ('a, 'b) t := ('a, 'b) T.t) = struct
 
@@ -368,7 +368,7 @@ module Monad1 = struct
     val join : 'a t t -> 'a t
   end
 
-  module Extension (Self : Monad1)
+  module Extend (Self : Monad1)
     : Extension with type 'a t := 'a Self.t = struct
 
     include Self
@@ -446,7 +446,7 @@ module Monad2 = struct
     val join : (('a, 'x) t, 'x) t -> ('a, 'x) t
   end
 
-  module Extension (Self : Monad2) : Extension
+  module Extend (Self : Monad2) : Extension
     with type ('a, 'x) t := ('a, 'x) Self.t = struct
     include Self
 
@@ -518,7 +518,7 @@ module State (S : Type) : State with type state = S.t = struct
 
   type 'a t = state -> ('a * state)
 
-  include Monad1.Extension(struct
+  include Monad1.Extend(struct
       type nonrec 'a t = 'a t
 
       let return a = fun s -> (a, s)
@@ -554,7 +554,7 @@ module State1 (S : Type1) : State1 with type 'x state = 'x S.t = struct
 
   type ('a, 'x) t = 'x state -> ('a * 'x state)
 
-  include Monad2.Extension(struct
+  include Monad2.Extend(struct
       type nonrec ('a, 'x) t = ('a, 'x) t
 
       let return a = fun s -> (a, s)
@@ -594,7 +594,7 @@ module StateT (S : Type) (M : Monad1) = struct
   type 'a monad = 'a M.t
   type 'a t = state -> ('a * state) monad
 
-  include Monad1.Extension(struct
+  include Monad1.Extend(struct
       type nonrec 'a t = 'a t
 
       let return a = fun s ->
@@ -641,7 +641,7 @@ module State1T (S : Type1) (M : Monad1) = struct
   type 'a monad = 'a M.t
   type ('a, 'x) t = 'x state -> ('a * 'x state) monad
 
-  include Monad2.Extension(struct
+  include Monad2.Extend(struct
       type nonrec ('a, 'x) t = ('a, 'x) t
 
       let return a = fun s ->

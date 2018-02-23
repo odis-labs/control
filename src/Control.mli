@@ -127,7 +127,7 @@ module Functor1 : sig
     val (<@>) : ('a -> 'b) -> 'a t -> 'b t
   end
 
-  module Extension (Instance : Functor1) : Extension
+  module Extend (Instance : Functor1) : Extension
     with type 'a t := 'a Instance.t
 end
 
@@ -144,7 +144,7 @@ module Functor0 : sig
     val (<@>) : (item -> item) -> t -> t
   end
 
-  module Extension (Instance : Functor0) : Extension
+  module Extend (Instance : Functor0) : Extension
     with type t := Instance.t
 end
 
@@ -160,7 +160,7 @@ module Functor2 : sig
     val (<@>) : ('a -> 'b ) -> ('a, 'x) t -> ('b, 'x) t
   end
 
-  module Extension (Instance : Functor2) : Extension
+  module Extend (Instance : Functor2) : Extension
     with type ('a, 'x) t := ('a, 'x) Instance.t
 end
 
@@ -211,7 +211,7 @@ module Applicative1 : sig
     val lift2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
   end
 
-  module Extension (Instance : Applicative1) : Extension
+  module Extend (Instance : Applicative1) : Extension
     with type 'a t := 'a Instance.t
 
   module To_functor (Instance : Applicative1) : Functor1
@@ -244,7 +244,7 @@ module Applicative2 : sig
     val lift2 : ('a -> 'b -> 'c) -> ('a, 'x) t -> ('b, 'x) t -> ('c, 'x) t
   end
 
-  module Extension (Instance : Applicative2) : Extension
+  module Extend (Instance : Applicative2) : Extension
     with type ('a, 'x) t := ('a, 'x) Instance.t
 
   module To_functor (Instance : Applicative2) : Functor2
@@ -287,7 +287,7 @@ module Alternative1 : sig
     (** [many a] is zero or more occurrences of [a]. *)
   end
 
-  module Extension
+  module Extend
       (Instance : Alternative1)
       (Applicative : Applicative1 with type 'a t := 'a Instance.t)
     : Extension with type 'a t := 'a Instance.t
@@ -320,7 +320,7 @@ module Alternative2 : sig
     (** [many a] is zero or more occurrences of [a]. *)
   end
 
-  module Extension
+  module Extend
       (Instance : Alternative2)
       (Applicative : Applicative2 with type ('a, 'x) t := ('a, 'x) Instance.t)
     : Extension with type ('a, 'x) t := ('a, 'x) Instance.t
@@ -378,7 +378,7 @@ module Monad1 : sig
         argument into the outer level. *)
   end
 
-  module Extension (Self : Monad1) : Extension
+  module Extend (Self : Monad1) : Extension
     with type 'a t := 'a Self.t
 
   module To_functor (Monad : Monad1) : Functor1
@@ -433,7 +433,7 @@ module Monad2 : sig
         argument into the outer level. *)
   end
 
-  module Extension (Self : Monad2) : Extension
+  module Extend (Self : Monad2) : Extension
     with type ('a, 'x) t := ('a, 'x) Self.t
 
   module To_functor (Monad : Monad2) : Functor2
