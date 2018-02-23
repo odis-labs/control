@@ -1,0 +1,22 @@
+opam-version: "1.2"
+maintainer: "Rizo Isrof <rizo@odis.io>"
+authors: ["Rizo Isrof <rizo@odis.io>"]
+homepage: "http://rizo.github.io/control"
+doc: "http://rizo.github.io/control/doc"
+license: "ISC"
+dev-repo: "https://github.com/rizo/control.git"
+bug-reports: "https://github.com/rizo/control/issues"
+
+descr: "Functional control abstractions for OCaml."
+tags: ["org:rizo" "functional" "monads" "control"]
+
+available: [ ocaml-version >= "4.01.0"]
+
+depends: [
+  "jbuilder" {build}
+]
+
+build: [
+  [ "jbuilder" "build" "-p" name "-j" jobs "@install" ]
+]
+
