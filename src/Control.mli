@@ -12,26 +12,82 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. *)
 
-(** Functional control abstractions.. *)
+(** Functional control abstractions.
 
-(** {1:types Types} *)
+    This library implements common functional idioms and abstractions such as
+    monoids, functors, monads, {i etc}.
 
-(** A module with an abstract monomorphic type. *)
+    {4 Examples}
+
+    As an example consider the implementation of the following module that
+    implement operations and interfaces for optional values:
+
+    {[
+      open Control.V0
+
+      module Option : sig
+        type 'a t = 'a option = None | Some of 'a
+
+        val some : 'a -> 'a option
+        val none : 'a option
+
+        val to_result : error: 'b -> 'a option -> ('a, 'b) result
+
+        (** {2 Implemented Interfaces} *)
+
+        include Monad.Extension       with type 'a t := 'a option
+        include Functor.Extension     with type 'a t := 'a option
+        include Applicative.Extension with type 'a t := 'a option
+      end = struct
+        type 'a t = 'a option = None | Some of 'a
+
+        let some a = Some a
+        let none = None
+
+        (* Interfaces *)
+
+        module Monad_instance = struct
+          type 'a t = 'a option
+
+          let return x = Some x
+
+          let bind f self =
+            match self with
+            | Some x -> f x
+            | None -> None
+        end
+
+        module Functor_instance = Monad.To_functor(Monad_instance)
+        module Applicative_instance = Monad.To_applicative(Monad_instance)
+
+        include Monad.Extend(Monad_instance)
+        include Functor.Extend(Functor_instance)
+        include Applicative.Extend(Applicative_instance)
+      end
+
+    ]} *)
+
+(** {1:types Abstract Types}
+
+    Module types used to represent abstract types. These are normally used as
+    argument types in functors. *)
+
+(** Abstract monomorphic type. *)
 module type Type0 = sig
   type t
 end
 
-(** A module with an abstract polymorphic unary type. *)
+(** Abstract polymorphic unary type. *)
 module type Type1 = sig
   type 'a t
 end
 
-(** A module with an abstract polymorphic binary type. *)
+(** Abstract polymorphic binary type. *)
 module type Type2 = sig
   type ('a, 'b) t
 end
 
-(** A module with an abstract polymorphic ternary type. *)
+(** Abstract polymorphic ternary type. *)
 module type Type3 = sig
   type ('a, 'b, 'c) t
 end
@@ -48,13 +104,23 @@ module type Type = Type0
 
     - {e Associativity}: [(a <+> b) <+> c = a <+> (b <+> c)]
 
-    {3 Examples}
-{[
-assert (List.combine [1; 2] [3; 4; 5] = [1; 2; 3; 4; 5]);
-assert (String.combine "abc" "def" = "abcdef");
-assert (Option.combine String.combine (Some "foo") (Some "bar") = Some "foobar"));
-assert (Option.combine String.combine None (Some "hello") = Some "foobar"));
-]} *)
+    {4 Examples}
+
+    {[
+      open Control.V0
+
+      module Int_semigroup : Semigroup0 = struct
+        let (<+>) a b = a + b
+      end
+
+      module List_semigroup : Semigroup1 = struct
+        let (<+>) a b = List.append a b
+      end
+
+      let () =
+        assert (Int_semigroup.(100 <+> 42) = 142);
+        assert (List_semigroup.([1; 2] <+> [3; 4; 5]) = [1; 2; 3; 4; 5])
+    ]} *)
 
 module type Semigroup0 = sig
   type t
@@ -76,14 +142,33 @@ module type Semigroup = Semigroup0
 (** {1 Monoid}
 
     Types that implement an associative binary operation, along with a
-    neutral element for that operation.
+    neutral element for that operation. Monoids extend semigroups.
 
     Instances are required to satisfy the following law:
 
     {ul
     {- {e Associativity of [<+>]}: [(a <+> b) <+> c = a <+> (b <+> c)].}
-    {- {e Neutral for [<+>]}: [a <+> neutral = a] and [neutral <+> = a].}
-    } *)
+    {- {e Neutral for [<+>]}: [a <+> neutral = a] and [neutral <+> = a].}}
+
+    {4 Examples}
+
+    {[
+      open Control.V0
+
+      module Int_monoid : Monoid0 = struct
+        let neutral = 0
+        let (<+>) a b = a + b
+      end
+
+      module List_monoid : Monoid1 = struct
+        let neutral = []
+        let (<+>) a b = List.append a b
+      end
+
+      let () =
+        assert (Int_semigroup.(100 <+> 42) = 142);
+        assert (List_semigroup.([1; 2] <+> [3; 4; 5]) = [1; 2; 3; 4; 5])
+    ]} *)
 
 module type Monoid0 = sig
   type t
@@ -119,12 +204,15 @@ module type Functor1 = sig
   (** The type that can be mapped over. *)
 
   val map : ('a -> 'b ) -> 'a t -> 'b t
+  (** Apply a function across everything of type ['a] in a parameterised type ['a t]. *)
 end
 
 module Functor1 : sig
   module type Extension = sig
     include Functor1
+
     val (<@>) : ('a -> 'b) -> 'a t -> 'b t
+    (** Infix version of {!Functor1.map}. *)
   end
 
   module Extend (Instance : Functor1) : Extension
@@ -133,15 +221,17 @@ end
 
 module type Functor0 = sig
   type t
-
   type item
+
   val map : (item -> item) -> t -> t
+  (** Apply a function across everything of type [item] in a type [t]. *)
 end
 
 module Functor0 : sig
   module type Extension = sig
     include Functor0
     val (<@>) : (item -> item) -> t -> t
+    (** Infix version of {!Functor1.map}. *)
   end
 
   module Extend (Instance : Functor0) : Extension
@@ -152,12 +242,14 @@ module type Functor2 = sig
   type ('a, 'x) t
 
   val map : ('a -> 'b) -> ('a, 'x) t -> ('b, 'x) t
+  (** Apply a function across everything of type ['a] in a parameterised type ['a t]. *)
 end
 
 module Functor2 : sig
   module type Extension = sig
     include Functor2
     val (<@>) : ('a -> 'b ) -> ('a, 'x) t -> ('b, 'x) t
+    (** Infix version of {!Functor1.map}. *)
   end
 
   module Extend (Instance : Functor2) : Extension
@@ -178,9 +270,9 @@ module Functor = Functor1
     of functions which take an integer and produce a boolean, and another list
     of integers, then we can write:
 
-{[
-func_list <*> int_list
-]}
+    {[
+      func_list <*> int_list
+    ]}
 
     to apply all the functions in the first list to all the ints in the second list
     to produce a list of all results. *)
