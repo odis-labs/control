@@ -2,7 +2,7 @@
 
 Functional control abstractions for OCaml.
 
-- *Homepage*: <http://odis.io/doc/control>
+- [*Homepage*](http://odis.io/docs-control/control/Control/index.html)
 
 
 ## Installation
