@@ -13,10 +13,10 @@ tags: ["org:rizo" "functional" "monads" "control"]
 available: [ ocaml-version >= "4.01.0"]
 
 depends: [
-  "jbuilder" {build}
+  "dune" {build & >= "1.0"}
 ]
 
 build: [
-  [ "jbuilder" "build" "-p" name "-j" jobs "@install" ]
+  [ "dune" "build" "-p" name "-j" jobs ]
 ]
 
